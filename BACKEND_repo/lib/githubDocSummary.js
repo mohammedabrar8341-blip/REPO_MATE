@@ -6,14 +6,14 @@ dotenv.config();
 const apiKey = process.env.Gemini_API_Key_1;
 
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
-const summaryModelFallbacks = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-3.6-flash"];
+const summaryModelFallbacks = ["gemini-3.6-flash"];
 
 export function buildFallbackSummary(doc) {
   const source = doc?.metadata?.source || "unknown file";
   const pageContent = typeof doc?.pageContent === "string" ? doc.pageContent : "";
-  const snippet = pageContent.replace(/\s+/g, " ").trim().slice(0, 180);
+  const snippet = pageContent.replace(/\s+/g, " ").trim().slice(0, 700);
 
-  return `This file is ${source}. It contains application code and logic for the repository. AI summary generation was rate-limited, so this is a fallback summary based on the file name and available source content. ${snippet ? `Preview: ${snippet}` : "No readable source content was available."}`;
+  return `File: ${source}\n\nAI summary generation was temporarily unavailable, so this detailed fallback was created from the file name and source code. This file contains repository implementation code and should be read together with its imports, exported functions, and callers to understand its complete role. ${snippet ? `Source overview: ${snippet}` : "No readable source content was available for analysis."}`;
 }
 
 async function generateSummaryWithFallback(systemPrompt, doc) {
@@ -63,13 +63,14 @@ Here is the code:
 ${code}
 ---
 
-Give a summary of no more than 100 words of the code above.
-Don't add greetings, boilerplate, or extra information.
-Just summarise the code concisely.
+Give a detailed summary of about 180 to 250 words. Explain the file's main responsibility, important functions or components, inputs and outputs, external libraries or modules it uses, control flow, error handling, and how it contributes to the repository. Mention notable routes, state, data transformations, or UI behavior when they are present.
+Use clear paragraphs or short labeled sections. Do not invent behavior that is not visible in the code. Do not add greetings or generic boilerplate.
 `;
 
     const result = await generateSummaryWithFallback(systemPrompt, doc);
-    return result || buildFallbackSummary(doc);
+    const summary = typeof result === "string" ? result.trim() : "";
+
+    return summary.length >= 80 ? summary : buildFallbackSummary(doc);
   } catch (error) {
     const message = error?.message || String(error);
     console.warn(`Summary generation failed for ${doc?.metadata?.source || "unknown file"}: ${message}`);

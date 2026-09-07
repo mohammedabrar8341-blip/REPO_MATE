@@ -2,14 +2,14 @@ import embedQuery from "./embedQuery.js";
 import LoadCodebaseEmbeddings from "./loadCodebaseEmbeddings.js";
 import cosineSimilarity from "./cosineSimilarity.js";
 
-export default async function queryCodebase(userQuery) {
+export default async function queryCodebase(userQuery, userId) {
   //step 1:- Generating embedding for userquery
   const queryEmbedding = await embedQuery(userQuery);
   //[]
 
   //step 2:-Load codebase embeddings
 
-  const codebaseEmbdding = await LoadCodebaseEmbeddings()
+  const codebaseEmbdding = await LoadCodebaseEmbeddings(userId);
   // [{}, {}, {}];
 
   // Step3: Generate cosine similarity betwen queryEmbedding and all child of codebaseEmbeddings

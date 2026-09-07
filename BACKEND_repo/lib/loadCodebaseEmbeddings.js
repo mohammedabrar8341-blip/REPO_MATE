@@ -1,12 +1,20 @@
-import fs from "fs/promises"
+import fs from "fs/promises";
+import { Connection } from "./db.js";
+import { repositoryModel } from "./Models.js";
 
-export default async function loadCodebaseEmbeddings() {
+export default async function loadCodebaseEmbeddings(userId) {
   console.log("fetching codebase embeddings....");
 
-    const data= await fs .readFile("embedding.json","utf-8")
+  if (userId && process.env.MONO_DB) {
+    await Connection();
+    const repository = await repositoryModel.findOne({ userId }).sort({ updatedAt: -1 }).lean();
+    if (repository?.indexedFiles?.length) {
+      return repository.indexedFiles;
+    }
+  }
 
-    return await JSON.parse(data)
-    
+  const data = await fs.readFile("embedding.json", "utf-8");
+  return JSON.parse(data);
 }
 
 // loadCodebaseEmbeddings()

@@ -4,9 +4,12 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const apiKey = process.env.Gemini_API_Key_3;
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
-const questionModelFallbacks = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-3.6-flash"];
+const generationKeys = [
+  ["Gemini_API_Key_Query_1", process.env.Gemini_API_Key_Query_1],
+  ["Gemini_API_Key_Query_0", process.env.Gemini_API_Key_Query_0],
+  ["Gemini_API_Key_3", process.env.Gemini_API_Key_3],
+].filter(([, key]) => key);
+const questionModelFallbacks = ["gemini-3.6-flash"];
 
 export function buildFallbackAnswer(userQuery, relevantFiles = []) {
   const safeFiles = relevantFiles.length ? relevantFiles : [];
@@ -24,36 +27,40 @@ export function buildFallbackAnswer(userQuery, relevantFiles = []) {
 }
 
 async function generateAnswerWithFallback(systemPrompt, userQuery, relevantFiles) {
-  if (!ai) {
+  if (!generationKeys.length) {
     throw new Error("Gemini API key missing.");
   }
 
   let lastError = null;
 
-  for (const model of questionModelFallbacks) {
-    try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: systemPrompt,
-      });
+  for (const [keyName, apiKey] of generationKeys) {
+    const ai = new GoogleGenAI({ apiKey });
 
-      if (response?.text) {
-        return response.text;
+    for (const model of questionModelFallbacks) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: systemPrompt,
+        });
+
+        if (response?.text) {
+          return response.text;
+        }
+      } catch (error) {
+        lastError = error;
+        console.warn(`Question model ${model} using ${keyName} failed for: ${userQuery}. ${error?.message || error}`);
       }
-    } catch (error) {
-      lastError = error;
-      console.warn(`Question model ${model} failed for: ${userQuery}. ${error?.message || error}`);
     }
   }
 
   throw lastError || new Error("No question model succeeded.");
 }
 
-export default async function askQuestion(userQuery) {
-  const relevantFiles = await queryCodebase(userQuery);
+export default async function askQuestion(userQuery, userId) {
+  const relevantFiles = await queryCodebase(userQuery, userId);
   const quotaExceeded = true;
 
-  if (!ai) {
+  if (!generationKeys.length) {
     return {
       AI_Summary: buildFallbackAnswer(userQuery, relevantFiles),
       relevantFiles,

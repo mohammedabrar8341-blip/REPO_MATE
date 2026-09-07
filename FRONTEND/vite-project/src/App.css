@@ -9,9 +9,23 @@
   --coral: #e86f5d;
 }
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+}
+
 body {
   background: var(--paper);
   color: var(--ink);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .workspace-shell {
@@ -347,11 +361,14 @@ textarea::placeholder {
 }
 .file-item {
   display: grid;
-  grid-template-columns: 38px 1fr auto;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
   gap: 12px;
   align-items: start;
   padding: 13px 0;
   border-bottom: 1px solid var(--line);
+}
+.file-item > div:nth-child(2) {
+  min-width: 0;
 }
 .file-icon {
   display: grid;
@@ -366,7 +383,7 @@ textarea::placeholder {
   display: block;
   margin: 2px 0 5px;
   font: 500 12px var(--mono);
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 .file-item p {
   display: -webkit-box;

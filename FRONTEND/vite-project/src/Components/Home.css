@@ -1,0 +1,412 @@
+/* Home.css */
+.home-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar {
+  background: white;
+  padding: 15px 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-brand h2 {
+  color: #667eea;
+  margin: 0;
+  font-size: 24px;
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #333;
+  font-weight: 500;
+}
+
+.profile-btn,
+.logout-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.profile-btn {
+  background: #667eea;
+  color: white;
+}
+
+.profile-btn:hover {
+  background: #764ba2;
+  transform: translateY(-2px);
+}
+
+.logout-btn {
+  background: #ff6b6b;
+  color: white;
+}
+
+.logout-btn:hover {
+  background: #ee5a52;
+  transform: translateY(-2px);
+}
+
+.home-content {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  background: white;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s;
+  color: #666;
+}
+
+.tab-btn:hover {
+  border-color: white;
+  transform: translateY(-2px);
+}
+
+.tab-btn.active {
+  background: white;
+  color: #667eea;
+  border-color: #667eea;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.error-banner,
+.success-banner,
+.warning-banner {
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-banner {
+  background: #fee;
+  color: #c33;
+  border-left: 4px solid #c33;
+}
+
+.success-banner {
+  background: #efe;
+  color: #3c3;
+  border-left: 4px solid #3c3;
+}
+
+.warning-banner {
+  background: #ffeaa7;
+  color: #d63031;
+  border-left: 4px solid #d63031;
+}
+
+.tab-content {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  margin-bottom: 30px;
+}
+
+.tab-content h3 {
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 24px;
+}
+
+.tab-description {
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 14px;
+}
+
+.form {
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.submit-btn {
+  padding: 12px 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.files-section {
+  margin-top: 30px;
+}
+
+.files-section h4,
+.results-section h4,
+.repos-section h4 {
+  color: #333;
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+.files-list {
+  display: grid;
+  gap: 10px;
+}
+
+.home-container .file-item {
+  display: block;
+  background: #f8f9fa;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+  transition: all 0.3s;
+}
+
+.home-container .file-item:hover {
+  background: #f0f2ff;
+}
+
+.home-container .file-name {
+  display: block;
+  min-width: 0;
+  font-weight: 600;
+  color: #333;
+  overflow-wrap: anywhere;
+}
+
+.home-container .file-toggle {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 15px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-container .file-toggle-icon {
+  flex: 0 0 auto;
+  color: #667eea;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.home-container .file-item.is-open {
+  background: #f0f2ff;
+  border-color: #d9defc;
+}
+
+.home-container .file-details {
+  padding: 0 15px 18px;
+}
+
+.home-container .file-code-heading {
+  margin: 8px 0;
+  color: #667eea;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.home-container .file-code {
+  overflow: auto;
+  max-height: 500px;
+  margin: 0 0 18px;
+  padding: 15px;
+  border-radius: 6px;
+  background: #20212b;
+  color: #f3f4ff;
+  font: 12px/1.6 Consolas, "Courier New", monospace;
+  white-space: pre;
+}
+
+.home-container .file-summary {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.results-section {
+  margin-top: 30px;
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.ai-summary {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  color: #333;
+  line-height: 1.8;
+  margin: 15px 0;
+  border-left: 4px solid #667eea;
+}
+
+.relevant-files {
+  margin-top: 20px;
+}
+
+.relevant-files h5 {
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.repos-section {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.repos-list {
+  display: grid;
+  gap: 15px;
+}
+
+.repo-card {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+  transition: all 0.3s;
+}
+
+.repo-card:hover {
+  background: #f0f2ff;
+  transform: translateX(5px);
+}
+
+.repo-url {
+  font-weight: 600;
+  color: #333;
+  word-break: break-all;
+  margin-bottom: 8px;
+}
+
+.repo-files {
+  color: #666;
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .navbar-user {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .profile-btn,
+  .logout-btn {
+    width: 100%;
+  }
+
+  .tab-content {
+    padding: 20px;
+  }
+
+  .home-content {
+    margin: 20px auto;
+  }
+
+  .tabs {
+    flex-direction: column;
+  }
+
+  .tab-btn {
+    width: 100%;
+  }
+}
