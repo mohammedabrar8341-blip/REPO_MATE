@@ -45,6 +45,40 @@ export const authAPI = {
 
 export const repoAPI = {
   addRepo: (data) => api.post("/protected/addRepo", data),
+  streamRepo: (data, onEvent) => {
+    const token = localStorage.getItem("token");
+    return fetch(`${API_BASE_URL}/protected/addRepo/stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(data),
+    }).then(async (response) => {
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "Could not index the repository.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() || "";
+
+        for (const rawEvent of events) {
+          const eventName = rawEvent.match(/^event: (.+)$/m)?.[1];
+          const eventData = rawEvent.match(/^data: (.+)$/m)?.[1];
+          if (eventName && eventData) onEvent(eventName, JSON.parse(eventData));
+        }
+      }
+    });
+  },
   askQuestion: (data) => api.post("/protected/giturl/question", data),
 };
 

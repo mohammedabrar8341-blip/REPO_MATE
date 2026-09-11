@@ -7,6 +7,18 @@ const apiKey = process.env.Gemini_API_Key_1;
 
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 const summaryModelFallbacks = ["gemini-3.6-flash"];
+let summaryQuotaResetAt = 0;
+
+function isQuotaError(error) {
+  const message = error?.message || String(error);
+  return error?.status === 429 || message.includes("429") || message.includes("RESOURCE_EXHAUSTED");
+}
+
+function setSummaryQuotaCooldown(error) {
+  const message = error?.message || String(error);
+  const retrySeconds = Number(message.match(/retryDelay["']?\s*:\s*["']?(\d+)/i)?.[1]) || 60;
+  summaryQuotaResetAt = Date.now() + retrySeconds * 1000;
+}
 
 export function buildFallbackSummary(doc) {
   const source = doc?.metadata?.source || "unknown file";
@@ -19,6 +31,10 @@ export function buildFallbackSummary(doc) {
 async function generateSummaryWithFallback(systemPrompt, doc) {
   if (!ai) {
     throw new Error("Gemini API key missing.");
+  }
+
+  if (Date.now() < summaryQuotaResetAt) {
+    throw new Error("Gemini summary quota is temporarily unavailable.");
   }
 
   let lastError = null;
@@ -35,7 +51,9 @@ async function generateSummaryWithFallback(systemPrompt, doc) {
       }
     } catch (error) {
       lastError = error;
-      console.warn(`Summary model ${model} failed for ${doc?.metadata?.source || "unknown file"}: ${error?.message || error}`);
+      if (isQuotaError(error)) {
+        setSummaryQuotaCooldown(error);
+      }
     }
   }
 
@@ -73,7 +91,9 @@ Use clear paragraphs or short labeled sections. Do not invent behavior that is n
     return summary.length >= 80 ? summary : buildFallbackSummary(doc);
   } catch (error) {
     const message = error?.message || String(error);
-    console.warn(`Summary generation failed for ${doc?.metadata?.source || "unknown file"}: ${message}`);
+    if (!message.includes("quota is temporarily unavailable") && !isQuotaError(error)) {
+      console.warn(`Summary generation failed for ${doc?.metadata?.source || "unknown file"}: ${message}`);
+    }
     return buildFallbackSummary(doc);
   }
 }

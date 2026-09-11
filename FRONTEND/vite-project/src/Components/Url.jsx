@@ -1,7 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL || "/api";
+import { repoAPI } from "../services/api";
 
 function Url() {
   const [githubURL, setGithubURL] = useState("");
@@ -22,7 +20,7 @@ function Url() {
     setIsIndexing(true);
 
     try {
-      const response = await axios.post(`${API_URL}/addRepo`, {
+      const response = await repoAPI.addRepo({
         githubURL,
         gitToken,
       });
@@ -54,7 +52,7 @@ function Url() {
     setIsAsking(true);
 
     try {
-      const response = await axios.post(`${API_URL}/giturl/question`, {
+      const response = await repoAPI.askQuestion({
         userQuery,
       });
       const data = response.data;

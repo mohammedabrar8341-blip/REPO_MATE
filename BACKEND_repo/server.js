@@ -57,6 +57,40 @@ app.post("/api/protected/addRepo", async (req, res) => {
   }
 });
 
+app.post("/api/protected/addRepo/stream", async (req, res) => {
+  const { githubURL, gitToken } = req.body || {};
+  const userId = req.user.id;
+
+  if (!githubURL) {
+    return res.status(400).json({ message: "A GitHub repository URL is required." });
+  }
+
+  res.status(200).set({
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+  res.flushHeaders();
+
+  const send = (event, data) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    send("status", { message: "Reading repository files..." });
+    const indexedFiles = await indexRepo(githubURL, gitToken, userId, async (file) => {
+      send("file", { fileName: file.fileName, sourceCode: file.sourceCode, summary: file.summary });
+    });
+    send("complete", { count: indexedFiles.length });
+  } catch (error) {
+    const message = error?.message || "Could not index the repository.";
+    console.error("Streaming repository indexing failed:", message);
+    send("error", { message: `Could not index the repository: ${message}` });
+  } finally {
+    res.end();
+  }
+});
+
 app.post("/api/protected/giturl/question", async (req, res) => {
   try {
     const { userQuery } = req.body;

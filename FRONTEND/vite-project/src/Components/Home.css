@@ -377,6 +377,51 @@
   font-size: 14px;
 }
 
+.indexing-skeleton {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid #e4e7f3;
+  border-radius: 10px;
+  background: #fafbff;
+}
+
+.indexing-status {
+  margin-bottom: 14px;
+  color: #667085;
+  font-size: 14px;
+}
+
+.skeleton-file {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 14px 0;
+  border-top: 1px solid #edf0f7;
+}
+
+.skeleton-line {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e8ebf5 25%, #f7f8fc 50%, #e8ebf5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+.skeleton-file-name {
+  width: 58%;
+}
+
+.skeleton-file-meta {
+  width: 34%;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .navbar {

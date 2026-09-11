@@ -19,7 +19,7 @@ export async function Signin(req, res) {
     }
 
     // Check if user exists
-    const foundUser = await userModel.findOne({ email });
+    const foundUser = await userModel.findOne({ email }).select("+password");
     if (!foundUser) {
       console.log("User not registered, attempting to login");
       return res.status(400).json({

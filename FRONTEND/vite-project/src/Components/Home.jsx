@@ -34,6 +34,8 @@ const Home = () => {
     setLoading(true);
     setError("");
     setSuccess("");
+    setIndexedFiles([]);
+    setOpenFileIndex(null);
 
     if (!indexData.githubURL) {
       setError("GitHub URL is required");
@@ -42,27 +44,34 @@ const Home = () => {
     }
 
     try {
-      const response = await repoAPI.addRepo({
+      let streamError = "";
+      const streamedFiles = [];
+      await repoAPI.streamRepo({
         githubURL: indexData.githubURL,
         gitToken: indexData.gitToken,
+      }, (event, data) => {
+        if (event === "file") {
+          streamedFiles.push(data);
+          setIndexedFiles((files) => [...files, data]);
+        }
+        if (event === "error") {
+          streamError = data.message;
+        }
       });
 
-      if (response.data.message === "Repo indexed successfully") {
-        setSuccess("Repository indexed successfully!");
-        setIndexedFiles(response.data.files || []);
-        setOpenFileIndex(null);
-        setRepositories([
-          ...repositories,
-          {
-            url: indexData.githubURL,
-            files: response.data.files || [],
-          },
-        ]);
-        setIndexData({ githubURL: "", gitToken: "" });
+      if (streamError) {
+        throw new Error(streamError);
       }
+
+      setSuccess("Repository indexed successfully!");
+      setRepositories((currentRepositories) => [
+        ...currentRepositories,
+        { url: indexData.githubURL, files: streamedFiles },
+      ]);
+      setIndexData({ githubURL: "", gitToken: "" });
     } catch (err) {
       const message =
-        err.response?.data?.message || "Failed to index repository";
+        err.response?.data?.message || err.message || "Failed to index repository";
       setError(message);
     } finally {
       setLoading(false);
@@ -186,10 +195,22 @@ const Home = () => {
               </button>
             </form>
 
+            {loading && indexedFiles.length === 0 && (
+              <div className="indexing-skeleton" aria-live="polite">
+                <div className="indexing-status">Reading files and generating summaries...</div>
+                {[1, 2, 3].map((item) => (
+                  <div className="skeleton-file" key={item}>
+                    <span className="skeleton-line skeleton-file-name" />
+                    <span className="skeleton-line skeleton-file-meta" />
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Indexed Files */}
             {indexedFiles.length > 0 && (
               <div className="files-section">
-                <h4>📄 Indexed Files ({indexedFiles.length})</h4>
+                <h4>📄 {loading ? "Files found so far" : "Indexed Files"} ({indexedFiles.length})</h4>
                 <div className="files-list">
                   {indexedFiles.map((file, index) => (
                     <article key={index} className={`file-item ${openFileIndex === index ? "is-open" : ""}`}>

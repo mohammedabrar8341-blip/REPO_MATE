@@ -5,11 +5,25 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const generationKeys = [
+  ["Gemini_API_Key_Query_2", process.env.Gemini_API_Key_Query_2],
   ["Gemini_API_Key_Query_1", process.env.Gemini_API_Key_Query_1],
   ["Gemini_API_Key_Query_0", process.env.Gemini_API_Key_Query_0],
   ["Gemini_API_Key_3", process.env.Gemini_API_Key_3],
 ].filter(([, key]) => key);
-const questionModelFallbacks = ["gemini-3.6-flash"];
+const MODEL = "gemini-3.6-flash";
+
+function isQuotaError(error) {
+  const message = error?.message || String(error);
+  const lowerMessage = message.toLowerCase();
+
+  return (
+    error?.status === 429 ||
+    error?.code === 429 ||
+    lowerMessage.includes("429") ||
+    lowerMessage.includes("resource_exhausted") ||
+    lowerMessage.includes("quota")
+  );
+}
 
 export function buildFallbackAnswer(userQuery, relevantFiles = []) {
   const safeFiles = relevantFiles.length ? relevantFiles : [];
@@ -26,7 +40,7 @@ export function buildFallbackAnswer(userQuery, relevantFiles = []) {
   return `I could not generate a fresh AI answer for "${userQuery}" because the Gemini API is currently rate-limited. Based on the indexed code, here is the most relevant context:\n\n${topMatches}\n\nPlease try again in a moment or re-index the repository once the quota resets.`;
 }
 
-async function generateAnswerWithFallback(systemPrompt, userQuery, relevantFiles) {
+async function generateAnswerWithFallback(systemPrompt) {
   if (!generationKeys.length) {
     throw new Error("Gemini API key missing.");
   }
@@ -34,21 +48,26 @@ async function generateAnswerWithFallback(systemPrompt, userQuery, relevantFiles
   let lastError = null;
 
   for (const [keyName, apiKey] of generationKeys) {
-    const ai = new GoogleGenAI({ apiKey });
+    try {
+      console.log(`Trying Gemini using ${keyName}...`);
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: MODEL,
+        contents: systemPrompt,
+      });
 
-    for (const model of questionModelFallbacks) {
-      try {
-        const response = await ai.models.generateContent({
-          model,
-          contents: systemPrompt,
-        });
+      if (response?.text) {
+        console.log(`Gemini succeeded using ${keyName}`);
+        return response.text;
+      }
 
-        if (response?.text) {
-          return response.text;
-        }
-      } catch (error) {
-        lastError = error;
-        console.warn(`Question model ${model} using ${keyName} failed for: ${userQuery}. ${error?.message || error}`);
+      throw new Error("Gemini returned an empty response.");
+    } catch (error) {
+      lastError = error;
+      console.warn(`Gemini failed using ${keyName}: ${error?.message || error}`);
+
+      if (isQuotaError(error)) {
+        throw error;
       }
     }
   }
@@ -57,14 +76,34 @@ async function generateAnswerWithFallback(systemPrompt, userQuery, relevantFiles
 }
 
 export default async function askQuestion(userQuery, userId) {
-  const relevantFiles = await queryCodebase(userQuery, userId);
-  const quotaExceeded = true;
+  let relevantFiles = [];
+
+  try {
+    relevantFiles = await queryCodebase(userQuery, userId);
+  } catch (error) {
+    const message = error?.message || String(error);
+    console.warn(`Codebase query failed: ${message}`);
+
+    return {
+      AI_Summary: buildFallbackAnswer(userQuery, relevantFiles),
+      relevantFiles,
+      quotaExceeded: isQuotaError(error),
+    };
+  }
 
   if (!generationKeys.length) {
     return {
       AI_Summary: buildFallbackAnswer(userQuery, relevantFiles),
       relevantFiles,
-      quotaExceeded,
+      quotaExceeded: false,
+    };
+  }
+
+  if (!relevantFiles.length) {
+    return {
+      AI_Summary: `I could not find relevant files in the indexed codebase for "${userQuery}".`,
+      relevantFiles,
+      quotaExceeded: false,
     };
   }
 
@@ -99,7 +138,7 @@ export default async function askQuestion(userQuery, userId) {
               `,
     ];
 
-    const answer = await generateAnswerWithFallback(systemPrompt, userQuery, relevantFiles);
+    const answer = await generateAnswerWithFallback(systemPrompt);
 
     return {
       AI_Summary: answer || buildFallbackAnswer(userQuery, relevantFiles),
@@ -113,7 +152,7 @@ export default async function askQuestion(userQuery, userId) {
     return {
       AI_Summary: buildFallbackAnswer(userQuery, relevantFiles),
       relevantFiles,
-      quotaExceeded: true,
+      quotaExceeded: isQuotaError(error),
     };
   }
 }

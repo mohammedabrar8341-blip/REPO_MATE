@@ -1,0 +1,9 @@
+{
+  "watch": [
+    "server.js",
+    "lib"
+  ],
+  "ignore": [
+    "embedding.json"
+  ]
+}

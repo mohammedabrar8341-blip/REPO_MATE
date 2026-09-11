@@ -5,13 +5,15 @@ import fs from "fs/promises";
 import { Connection } from "./db.js";
 import { repositoryModel } from "./Models.js";
 
-export default async function indexRepo(githubURL, gitToken, userId) {
+export default async function indexRepo(githubURL, gitToken, userId, onFile) {
   console.log("loading/fetching repo ....");
 
   const docArr = await loadGitHub(githubURL, gitToken);
   console.log("gethub repo fetched ", docArr.length);
 
-  const result = await Promise.all(docArr.map(async (doc) => {
+  const result = [];
+
+  for (const doc of docArr) {
     try {
       const docsummary = await githubDocSummary(doc);
       console.log("Step 2 done");
@@ -25,22 +27,22 @@ export default async function indexRepo(githubURL, gitToken, userId) {
         fileName: doc.metadata.source,
       };
 
-      return docObject;
+      result.push(docObject);
+      if (onFile) await onFile(docObject);
     } catch (error) {
       const fileName = doc?.metadata?.source || "unknown-file";
       console.warn(`Failed to index ${fileName}: ${error?.message || error}`);
 
-      return {
+      const fallbackObject = {
         summary: buildFallbackSummary(doc),
         embeding: new Array(768).fill(0),
         sourceCode: JSON.parse(JSON.stringify(doc?.pageContent || "")),
         fileName,
       };
+      result.push(fallbackObject);
+      if (onFile) await onFile(fallbackObject);
     }
-  }));
-
-  await fs.writeFile("embedding.json", JSON.stringify(result, null, 2));
-  console.log("✅ Embeddings generated and saved to embeddings.json");
+  }
 
   if (userId && process.env.MONO_DB) {
     await Connection();
@@ -53,7 +55,7 @@ export default async function indexRepo(githubURL, gitToken, userId) {
         repositoryName,
         indexedFiles: result,
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true },
+      { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
     );
     console.log("Repository embeddings saved to MongoDB");
   }
